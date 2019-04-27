@@ -1,0 +1,5 @@
+data("airquality") #dataset used
+airquality %>%
+group_by(Day) %>%
+summarise(mean_wind = mean(Wind)) %>%
+ggplot() +
