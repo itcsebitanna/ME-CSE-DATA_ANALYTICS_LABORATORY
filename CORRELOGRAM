@@ -1,0 +1,6 @@
+#data("mtcars")
+corr_matrix <‐ cor(mtcars)
+# with circles
+corrplot(corr_matrix)
+# with numbers and lower
+corrplot(corr_matrix,method = 'number',type = "lower")
