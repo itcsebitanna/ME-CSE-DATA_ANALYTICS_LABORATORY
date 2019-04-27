@@ -1,0 +1,2 @@
+plot(x=iris$Petal.Length) #Simple Scatter Plot
+plot(x=iris$Petal.Length,y=iris$Species) #Multivariate Scatter Plot
