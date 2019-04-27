@@ -1,0 +1,60 @@
+library (ggplot2)
+library (dplyr)
+library (maps)
+library (ggmap)
+library (mongolite)
+library (lubridate)
+library (gridExtra)
+crimes=data.table::fread("Crimes_2001_to_present.csv")
+names (crimes)
+names(crimes) = gsub(" ","",names(crimes))
+names(crimes)
+my_collection$count()
+my_collection$iterate()$one()
+length(my_collection$distinct("PrimaryType"))
+my_collection$count('{"PrimaryType":"ASSAULT", "Domestic" : "true" }')
+query1= my_collection$find('{"PrimaryType" : "ASSAULT", "Domestic" : "true" }')
+query2= my_collection$find('{"PrimaryType" : "ASSAULT", "Domestic" : "true" }',
+fields = '{"_id":0, "PrimaryType":1, "Domestic":1}')
+ncol(query1) # with all the columns
+ncol(query2) # only the selected columns
+domestic=my_collection$find('{"Domestic":"true"}', fields = '{"_id":0, "Domestic":1,"Date":1}')
+domestic$Date= mdy_hms(domestic$Date)
+domestic$Weekday = weekdays(domestic$Date)
+domestic$Hour = hour(domestic$Date)
+domestic$month = month(domestic$Date,label=TRUE)
+WeekdayCounts = as.data.frame(table(domestic$Weekday))
+WeekdayCounts$Var1 = factor(WeekdayCounts$Var1, ordered=TRUE, levels=c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday","Saturday"))
+ggplot(WeekdayCounts, aes(x=Var1, y=Freq)) + geom_line(aes(group=1),size=2,color="red") + xlab("Day of the Week") + ylab("Total Domestic Crimes")+
+ggtitle("Domestic Crimes in the City of Chicago Since 2001")+
+DayHourCounts = as.data.frame(table(domestic$Weekday, domestic$Hour))
+DayHourCounts$Hour = as.numeric(as.character(DayHourCounts$Var2))
+ggplot(DayHourCounts, aes(x=Hour, y=Freq)) + geom_line(aes(group=Var1, color=Var1), size=1.4)+ylab("Count")+
+ylab("Total Domestic Crimes")+ggtitle("Domestic Crimes in the City of Chicago Since 2001")+
+theme(axis.title.x=element_text(size=14),axis.text.y = element_text(color="blue",size=11,angle=0,hjust=1,vjust=0),
+axis.text.x = element_text(color="blue",size=11,angle=0,hjust=.5,vjust=.5),
+axis.title.y = element_text(size=14),
+legend.title=element_blank(),
+plot.title=element_text(size=16,color="purple",hjust=0.5))
+DayHourCounts$Type = ifelse((DayHourCounts$Var1 == "Sunday") | (DayHourCounts$Var1 == "Saturday"), "Weekend", "Weekday")
+ggplot(DayHourCounts, aes(x=Hour, y=Freq)) + geom_line(aes(group=Var1, color=Type), size=2, alpha=0.5) +
+ylab("Total Domestic Crimes")+ggtitle("Domestic Crimes in the City of Chicago Since 2001")+
+theme(axis.title.x=element_text(size=14),axis.text.y = element_text(color="blue",size=11,angle=0,hjust=1,vjust=0),
+axis.text.x = element_text(color="blue",size=11,angle=0,hjust=.5,vjust=.5),
+axis.title.y = element_text(size=14),
+element_text(size=14), legend.title=element_blank(),plot.title=element_text(size=16,color="purple",hjust=0.5))
+crimes=my_collection$find('{}', fields = '{"_id":0, "PrimaryType":1,"Year":1}')
+crimes%>%group_by(PrimaryType)%>%summarize(Count=n())%>%arrange(desc(Count))%>%head(4)
+four_most_common=crimes%>%group_by(PrimaryType)%>%summarize(Count=n())%>%arrange(desc(Count))%>%head(4)
+four_most_common=four_most_common$PrimaryType
+crimes=my_collection$find('{}', fields = '{"_id":0, "PrimaryType":1,"Date":1}')
+crimes=filter(crimes,PrimaryType %in%four_most_common)
+crimes$Date= mdy_hms(crimes$Date)
+crimes$Weekday = weekdays(crimes$Date)
+crimes$Hour = hour(crimes$Date)
+crimes$month=month(crimes$Date,label = TRUE)
+g1=g(filter(crimes,PrimaryType=="THEFT"))+ggtitle("Theft")+ylab("Total Count")
+g2=g(filter(crimes,PrimaryType=="BATTERY"))+ggtitle("BATTERY")+ylab("Total Count")
+g3=g(filter(crimes,PrimaryType=="CRIMINAL DAMAGE"))+ggtitle("CRIMINAL DAMAGE")+ylab("Total Count")
+g4=g(filter(crimes,PrimaryType=="NARCOTICS"))+ggtitle("NARCOTICS")+ylab("Total Count")
+grid.arrange(g1,g2,g3,g4,ncol=2)
